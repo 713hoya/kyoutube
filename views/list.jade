@@ -1,0 +1,195 @@
+extends layout
+block content
+  div#page1(data-role='page')
+    div(data-theme='a',data-role='header')
+      img(src='/images/kyoutube_header_gray.jpg', alt='kyoutue', height='37', class='ui-btn-left', id='home_logo')
+      h3 今日チューブ
+      a(href='#', id='dialoglink', data-role='button' class='ui-btn-right')
+        検索
+      input(type='hidden', id='search_query_hidden')
+      input(type='hidden', id='filters_hidden')
+    div(data-role='content')
+
+      //just basic check, we will always have items from youtube though
+        - if(items.length)
+            //create a listview wrapper
+            ul(data-role='listview')
+                //foreach of the collected elements
+                - items.forEach(function(item){
+                    //create a li
+                    li
+                        //and a link using our passed urlObj Object //a(href='http://youtu.be/' + item['urlObj'].query.v, title=item['title'], data-transition='flip')
+                        a(href='#', title=item['title'], data-transition='flip', data-query=item['urlObj'].query.v, onclick='launchPopupVideo($(this).attr(\"data-query\"));') 
+                            //and a thumbnail
+                            img(src=item['thumbnail'], alt='Thumbnail', width='80', height='80')
+                            //title and time label
+                            h3= item['title']
+                            h5= item['time']
+                - })
+                
+      a(href='#popupVideo', id='launchvideo', data-rel='popup', data-position-to='window', data-role='button', data-theme='a', data-inline='true')
+        //Launch video player
+      div(data-role='popup', id='popupVideo', data-overlay-theme='a', data-theme='a', data-tolerance='15,15', class='ui-content')
+        //iframe(id='player_1', src='http://player.vimeo.com/video/41135183', width='497', height='298', frameborder='0', webkitallowfullscreen='')
+        //iframe(id='player', type='text/html', width='640', height='390', src='http://www.youtube.com/embed/Ti2H2HSyYr0?enablejsapi=1&origin=http://example.com', frameborder='0')
+        iframe(id='player_1', type='text/html', width='640', height='390', src='', frameborder='0')
+        
+      //video(width='640', height='360', id='player1', preload='none')
+      //  source(type='video/youtube', src='http://www.youtube.com/watch?v=nOEw9iiopwI')
+      
+      //iframe(id='player', type='text/html', width='640', height='390', src='http://www.youtube.com/embed/Ti2H2HSyYr0?enablejsapi=1&origin=http://example.com', frameborder='0')
+
+    div(data-role='footer')
+      div(data-role='navbar', data-iconpos='top')
+        ul
+          li
+             a(href='#', id='makefavicon', data-role='button', data-icon='plus', data-rel='dialog')
+               招待状を送る
+          li
+             a(href='#', id='makesetup', data-role='button', data-icon='gear')
+               設定
+      
+    script.
+      $.extend({
+        parseQuerystring: function(){
+          var nvpair = {};
+          var qs = window.location.search.replace('?', '');
+          var pairs = qs.split('&');
+          $.each(pairs, function(i, v){
+            var pair = v.split('=');
+            nvpair[pair[0]] = pair[1];
+          });
+          return nvpair;
+        }
+      });    
+      
+      $('#launchvideo').hide();
+      var qs = jQuery.parseQuerystring();
+      $('#search_query_hidden').val(qs.search_query)
+      $('#filters_hidden').val(qs.filters)
+      
+      $('#dialoglink').live('vclick', function(e) {
+        $(this).simpledialog({
+          'mode' : 'blank',
+          'prompt': false,
+          'forceInput': false,
+          'fullHTML' : 
+            "<ul data-role='listview'><li>検索語 : <input type='text' name='searchword' id='searchword' /></li><li><label for='select-choice-0' class='select'>期間:</label><select name='select-choice-0' id='select-choice-0'><option value='hour'>1時間前</option><option value='today' selected='selected'>今日</option><option value='week'>今週</option><option value='month'>今月</option></select></li><fieldset class='ui-grid-a'><div class='ui-block-a'><button data-theme='a' id='searchsubmit' type='button'>Search</div><div class='ui-block-b'><button data-theme='c' id='simpleclose' type='button'>Close</div></fieldset></ul>"
+        })
+        if(qs.search_query != undefined && qs.search_query.length > 1) {
+            $('#searchword').val(qs.search_query)
+        }
+      });
+     
+      $('#simpleclose').live('vclick', function(e) {
+        if(e.target != this)return;
+        e.stopPropagation(); // to prevent event from bubbling up
+        e.preventDefault(); // then cancel the event (if it's cancelable)
+        $('#dialoglink').simpledialog('close');
+      }); 
+      $('#simpleclose2').live('vclick', function(e) {
+        if(e.target != this)return;
+        e.stopPropagation(); // to prevent event from bubbling up
+        $('#makesetup').simpledialog('close');
+      }); 
+      $('#sendbtn_close').live('vclick', function(e) {
+        if(e.target != this)return;
+        e.stopPropagation(); // to prevent event from bubbling up
+        $('#makefavicon').simpledialog('close');
+      }); 
+      
+      $('#searchsubmit').live('vclick', function(e) {
+        if(e.target != this)return;
+        e.stopPropagation(); // to prevent event from bubbling up
+        $('#searchword').focus();
+        if($('#searchword').val() == '') { 
+          $('#searchword').focus();
+          return false;
+        }
+        var orgURL = window.location.toString().split('?')[0];
+        var topURL = orgURL.split("#")[0];
+        location.replace( topURL +  '?search_query=' + $('#searchword').val() + '&filters=' + $('#select-choice-0').val());
+        //window.location = window.location.toString().split('?')[0] + 
+        e.preventDefault(); // then cancel the event (if it's cancelable)
+      });
+
+      $('#makefavicon').click(function() {
+        $(this).simpledialog({
+          'mode' : 'blank',
+          'prompt': false,
+          'forceInput': false,
+          'fullHTML' : 
+            "<ul data-role='listview' data-theme='a'><li><input type='button' data-theme='c' name='sendbtn1' id='sendbtn1' value='メール送信'/></li><li><input type='button' data-theme='c' name='sendbtn2' id='sendbtn2' value='ツイッター'/></li><li><input type='button' data-theme='c' name='sendbtn3' id='sendbtn3' value='facebook'/></li><li><input type='button' name='sendbtn_close' id='sendbtn_close' value='閉じる'/></li></ul>"
+        })
+      }); 
+
+      $('#makesetup').click(function() {
+        $(this).simpledialog({
+          'mode' : 'blank',
+          'prompt': false,
+          'forceInput': false,
+          'fullHTML' : 
+            "<ul data-role='listview'><li>検索語 : <input type='text' name='searchword' id='searchword' /></li><li><label for='select-choice-0' class='select'>期間:</label><select name='select-choice-0' id='select-choice-0'><option value='hour'>1時間前</option><option value='today' selected='selected'>今日</option><option value='week'>今週</option><option value='month'>今月</option></select></li><fieldset class='ui-grid-a'><div class='ui-block-a'><button data-theme='a' id='savesubmit' type='button'>Save</div><div class='ui-block-b'><button data-theme='c' id='simpleclose2' type='button'>Close</div></fieldset></ul>"
+        })
+      }); 
+
+      $('#home_logo').click(function() {
+        location.href = window.location.toString().split('?')[0];
+      }); 
+      
+      
+      //vimeo player scripts
+      $(document).on('pageinit', function () {
+          $('#popupVideo iframe')
+          .attr('width', 0)
+          .attr('height', 0);
+       
+      $('#popupVideo').on({
+          popupbeforeposition: function () {
+              var size = scale(497, 298, 15, 1),
+              w = size.width,
+              h = size.height;
+           
+              $('#popupVideo iframe')
+              .attr('width', w)
+              .attr('height', h);
+              },
+              popupafterclose: function () {
+              $('#popupVideo iframe')
+              .attr('width', 0)
+              .attr('height', 0);
+              Froogaloop($('#player_1')[0]).api('pause');
+              }
+          });
+      });
+       
+      function scale(width, height, padding, border) {
+        var scrWidth = $(window).width() - 30,
+        scrHeight = $(window).height() - 30,
+        ifrPadding = 2 * padding,
+        ifrBorder = 2 * border,
+        ifrWidth = width + ifrPadding + ifrBorder,
+        ifrHeight = height + ifrPadding + ifrBorder,
+        h, w;
+       
+        if (ifrWidth < scrWidth && ifrHeight < scrHeight) {
+          w = ifrWidth;
+          h = ifrHeight;
+        } else if ((ifrWidth / scrWidth) > (ifrHeight / scrHeight)) {
+          w = scrWidth;
+          h = (scrWidth / ifrWidth) * ifrHeight;
+        } else {
+          h = scrHeight;
+          w = (scrHeight / ifrHeight) * ifrWidth;
+        }
+       
+        return {
+          'width': w - (ifrPadding + ifrBorder),
+          'height': h - (ifrPadding + ifrBorder)
+        };
+      };
+      
+      function launchPopupVideo(queryv) {
+        $('#player_1').attr('src', 'http://www.youtube.com/embed/' + queryv + '?enablejsapi=1&origin=http://example.com');
+        $('#launchvideo').click();
+      }

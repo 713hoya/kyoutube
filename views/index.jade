@@ -1,0 +1,15 @@
+div#view(data-role='page')
+  div(data-role='header')
+    a(data-rel='back', data-icon='back', data-derection='reverse') Back
+    h1 Memo View
+    a(href='#edit', data-icon='gear', data-transition='flip') Edit
+
+  div(data-role='content')
+    div(data-role='filedcontain')
+      label(for='memo-view') Memo
+      p#memo-view
+
+  div.ui-header(data-role='footer')
+    a(href='#add', data-icon='plus') Add
+    h4 Kenichiro Murata
+    a#del-btn(href='#', data-icon='delete') Delete
